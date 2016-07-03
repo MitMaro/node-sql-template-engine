@@ -1,0 +1,15 @@
+---
+root: true
+env:
+    node: true
+    es6: true
+extends: mitmaro
+rules:
+    no-constant-condition:
+        - error
+        - checkLoops: false
+    newline-after-var: off
+    no-extra-parens:
+        - error
+        - all
+        - nestedBinaryExpressions: false

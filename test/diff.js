@@ -1,4 +1,5 @@
 'use strict';
+
 const chalk = require('chalk');
 const JsDiff = require('diff');
 
@@ -12,5 +13,6 @@ module.exports = function prettyDiff(actual, expected) {
 		}
 		return chalk.gray(part.value.replace(/.+/g, '    | $&'));
 	}).join('');
+
 	return `\n${diff}\n`;
 };

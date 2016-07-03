@@ -18,26 +18,31 @@ const {
 	notOperator,
 	integer,
 	float
-} = require('../tokenGenerator');
+} = require('../tokenBuilders');
 
 const cases = [
 	{
+		description: 'with empty string',
+		input: [ '' ],
+		expected: []
+	},
+	{
 		description: 'with string literal only',
-		input: ['a'],
+		input: [ 'a' ],
 		expected: [
 			textLiteral(0, 'a')
 		]
 	},
 	{
 		description: 'with tag only',
-		input: ['{{'],
+		input: [ '{{' ],
 		expected: [
 			startTag(0)
 		]
 	},
 	{
 		description: 'with tag after literal',
-		input: ['aa{{'],
+		input: [ 'aa{{' ],
 		expected: [
 			textLiteral(0, 'aa'), startTag(2)
 		]
@@ -68,7 +73,7 @@ const cases = [
 	},
 	{
 		description: 'with single quoted string in if',
-		input: ['{{if \'str\'}}'],
+		input: [ '{{if \'str\'}}' ],
 		expected: [
 			startTag(0), ifStatement(2),
 			stringSingle(5), string(6, 'str'), stringSingle(9), endTag(10)
@@ -76,7 +81,7 @@ const cases = [
 	},
 	{
 		description: 'with double quoted string in if',
-		input: ['{{if "str"}}'],
+		input: [ '{{if "str"}}' ],
 		expected: [
 			startTag(0), ifStatement(2),
 			stringDouble(5), string(6, 'str'), stringDouble(9), endTag(10)
@@ -84,14 +89,14 @@ const cases = [
 	},
 	{
 		description: 'with brackets',
-		input: ['{{()}}'],
+		input: [ '{{()}}' ],
 		expected: [
 			startTag(0), bracketOpen(2), bracketClose(3), endTag(4)
 		]
 	},
 	{
 		description: 'with nested brackets',
-		input: ['{{ ( ( ) ) }}'],
+		input: [ '{{ ( ( ) ) }}' ],
 		expected: [
 			startTag(0),
 			bracketOpen(3), bracketOpen(5), bracketClose(7), bracketClose(9),
@@ -100,7 +105,7 @@ const cases = [
 	},
 	{
 		description: 'with binary operator',
-		input: ['{{foo&&bar}}'],
+		input: [ '{{foo&&bar}}' ],
 		expected: [
 			startTag(0),
 			variable(2, 'foo'), andOperator(5), variable(7, 'bar'),
@@ -109,7 +114,7 @@ const cases = [
 	},
 	{
 		description: 'with unary operator',
-		input: ['{{!foo}}'],
+		input: [ '{{!foo}}' ],
 		expected: [
 			startTag(0),
 			notOperator(2), variable(3, 'foo'),
@@ -118,30 +123,30 @@ const cases = [
 	},
 	{
 		description: 'with integer literal',
-		input: ['{{123}}'],
+		input: [ '{{123}}' ],
 		expected: [
-			startTag(0), integer(2, "123"), endTag(5)
+			startTag(0), integer(2, '123'), endTag(5)
 		]
 	},
 	{
 		description: 'with float literal',
-		input: ['{{1.23}}'],
+		input: [ '{{1.23}}' ],
 		expected: [
-			startTag(0), float(2, "1.23"), endTag(6)
+			startTag(0), float(2, '1.23'), endTag(6)
 		]
 	},
 	{
 		description: 'with negative integer literal',
-		input: ['{{-123}}'],
+		input: [ '{{-123}}' ],
 		expected: [
-			startTag(0), integer(2, "-123"), endTag(6)
+			startTag(0), integer(2, '-123'), endTag(6)
 		]
 	},
 	{
 		description: 'with negative float literal',
-		input: ['{{-1.23}}'],
+		input: [ '{{-1.23}}' ],
 		expected: [
-			startTag(0), float(2, "-1.23"), endTag(7)
+			startTag(0), float(2, '-1.23'), endTag(7)
 		]
 	}
 ];
@@ -152,8 +157,8 @@ cases.forEach((c) => {
 		const tokens = lexer.tokens();
 		const result = [];
 
-		while(true) {
-			let value = tokens.next();
+		while (true) {
+			const value = tokens.next();
 			if (value.done) {
 				break;
 			}
@@ -170,5 +175,5 @@ test('with invalid state', (t) => {
 	const lexer = new Lexer('foo');
 	lexer.state = 'INVALID';
 	const tokens = lexer.tokens();
-	t.throws(() => {tokens.next()}, /Invalid state incurred/);
+	t.throws(() => tokens.next(), /Invalid state incurred/);
 });
