@@ -7,25 +7,21 @@
     "test": "test"
   },
   "scripts": {
-    "test": "ava --timeout=5s **/*.test.js",
-    "test:coverage": "nyc --reporter=html --reporter=text-summary --lines=100 --funcions=100 --branches=100 --check-coverage npm test"
+    "lint": "eslint .",
+    "test": "eslint . && npm run test:coverage",
+    "test:unit": "mocha",
+    "test:coverage": "istanbul cover _mocha"
   },
   "author": "Tim Oram <mitmaro@gmail.com>",
   "license": "ISC",
   "devDependencies": {
-    "ava": "^0.15.2",
+    "chai": "^3.5.0",
     "chalk": "^1.1.3",
     "diff": "^2.2.3",
     "eslint": "^3.0.0",
-    "eslint-config-mitmaro": "^1.0.0",
+    "eslint-config-mitmaro": "^2.0.0",
     "eslint-plugin-strict-newline": "^1.0.0",
-    "nyc": "^6.4.4"
-  },
-  "nyc": {
-    "lines": 100,
-    "functions": 100,
-    "branches": 100,
-    "check-coverage": true,
-    "report-dir": "./coverage"
+    "istanbul": "^0.4.4",
+    "mocha": "^2.5.3"
   }
 }
