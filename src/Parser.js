@@ -289,8 +289,10 @@ class Parser {
 			}
 			token = this.getExpectedToken(TOKEN_TYPE_BINARY_OPERATOR);
 			const precedenceInfo = PrecedenceTable[token.subType];
-			const nextPrecedence = precedenceInfo.association === LEFT_ASSOCIATIVE
-				? precedenceInfo.precedence + 1 : precedenceInfo.precedence;
+			const nextPrecedence = precedenceInfo.precedence + 1;
+			// there currently is no right associative binary operator 
+			// const nextPrecedence = precedenceInfo.association === LEFT_ASSOCIATIVE
+			//	? precedenceInfo.precedence + 1 : precedenceInfo.precedence;
 
 			tree = {
 				type: PARSER_TYPE_BINARY_OPERATOR,
@@ -306,6 +308,8 @@ class Parser {
 		const token = this.lookahead(1, [
 			TOKEN_TYPE_UNARY_OPERATOR,
 			TOKEN_BOUNDARY_BRACKET_OPEN,
+			TOKEN_BOUNDARY_STRING_DOUBLE,
+			TOKEN_BOUNDARY_STRING_SINGLE,
 			TOKEN_TYPE_VALUE
 		]);
 
@@ -336,25 +340,29 @@ class Parser {
 	}
 
 	generateValue() {
-		const token = this.getExpectedToken(TOKEN_TYPE_VALUE);
+		const token = this.getExpectedToken([
+			TOKEN_TYPE_VALUE, TOKEN_BOUNDARY_STRING_SINGLE, TOKEN_BOUNDARY_STRING_DOUBLE
+		]);
 		if (token.subType === TOKEN_VALUE_VARIABLE) {
 			return {
 				type: PARSER_TYPE_VARIABLE,
 				name: token.value
 			};
 		}
-
+		
 		let value;
+		if (token.subType === TOKEN_BOUNDARY_STRING_SINGLE || token.subType === TOKEN_BOUNDARY_STRING_DOUBLE) {
+			value = this.getExpectedToken(TOKEN_VALUE_STRING).value;
+			this.getExpectedToken(token.subType);
+		}
+		
 		if (token.subType === TOKEN_VALUE_FLOAT) {
 			value = parseFloat(token.value);
 		}
 		else if (token.subType === TOKEN_VALUE_INTEGER) {
 			value = parseInt(token.value, 10);
 		}
-		else if (token.subType === TOKEN_VALUE_STRING) {
-			value = token.value;
-		}
-
+		
 		return {
 			type: PARSER_TYPE_VALUE,
 			value

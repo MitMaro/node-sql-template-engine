@@ -5,7 +5,6 @@ const Parser = require('../../src/Parser');
 const Lexer = require('../../src/Lexer');
 const nb = require('../nodeBuilder');
 
-
 function getParserResult(input) {
 	const inputString = Array.isArray(input) ? input.join('\n') : input;
 	const parser = new Parser(new Lexer(inputString));

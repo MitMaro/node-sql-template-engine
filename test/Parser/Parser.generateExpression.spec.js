@@ -6,20 +6,12 @@ const Lexer = require('../../src/Lexer');
 const nb = require('../nodeBuilder');
 
 const {
-	OPERATOR_EQUALS,
-	OPERATOR_NOT_EQUALS,
-	OPERATOR_STRICT_EQUALS,
-	OPERATOR_STRICT_NOT_EQUALS,
 	OPERATOR_AND,
 	OPERATOR_OR,
-	OPERATOR_NOT,
 	OPERATOR_GREATER_THAN,
-	OPERATOR_LESS_THAN,
-	OPERATOR_GREATER_EQUAL_THAN,
-	OPERATOR_LESS_EQUAL_THAN,
 } = require('../../src/constants');
 
-describe.only('Parser.generateExpression', function() {
+describe('Parser.generateExpression', function() {
 	[
 		{
 			description: 'with base binary operator',
@@ -31,13 +23,99 @@ describe.only('Parser.generateExpression', function() {
 			)
 		},
 		{
-			description: 'with nested expression operator',
+			description: 'with expression chain',
 			input: 'a > b > c',
 			expected: nb.binaryExpression(
-					nb.variable('a'),
-					nb.variable('b'),
+					nb.binaryExpression(
+						nb.variable('a'),
+						nb.variable('b'),
+						OPERATOR_GREATER_THAN
+					),
+					nb.variable('c'),
 					OPERATOR_GREATER_THAN
 			)
+		},
+		{
+			description: 'with brackets on the right',
+			input: 'a > (b > c)',
+			expected: nb.binaryExpression(
+					nb.variable('a'),
+					nb.binaryExpression(
+							nb.variable('b'),
+							nb.variable('c'),
+							OPERATOR_GREATER_THAN
+					),
+					OPERATOR_GREATER_THAN
+			)
+		},
+		{
+			description: 'with brackets on the left',
+			input: '(a > b) > c',
+			expected: nb.binaryExpression(
+					nb.binaryExpression(
+							nb.variable('a'),
+							nb.variable('b'),
+							OPERATOR_GREATER_THAN
+					),
+					nb.variable('c'),
+					OPERATOR_GREATER_THAN
+			)
+		},
+		{
+			description: 'with ors and ands',
+			input: 'a || b && c',
+			expected: nb.binaryExpression(
+					nb.variable('a'),
+					nb.binaryExpression(
+							nb.variable('b'),
+							nb.variable('c'),
+							OPERATOR_AND
+					),
+					OPERATOR_OR
+			)
+		},
+		{
+			description: 'with a not on the left',
+			input: '!a || b',
+			expected: nb.binaryExpression(
+					nb.notConditional(nb.variable('a')),
+					nb.variable('b'),
+					OPERATOR_OR
+			)
+		},
+		{
+			description: 'with a not on the right',
+			input: 'a || !b',
+			expected: nb.binaryExpression(
+					nb.variable('a'),
+					nb.notConditional(nb.variable('b')),
+					OPERATOR_OR
+			)
+		},
+		{
+			description: 'with a variable',
+			input: 'a',
+			expected: nb.variable('a')
+		},
+		{
+			description: 'with a integer value',
+			input: '123',
+			expected: nb.value(123)
+		},
+		{
+			description: 'with a float value',
+			input: '123.34',
+			expected: nb.value(123.34)
+		},
+		{
+			description: 'with a single quote string',
+			input: '\'foo\'',
+			expected: nb.value('foo')
+		},
+		{
+			description: 'with a double quote string',
+			input: '"foo"',
+			expected: nb.value('foo')
 		}
 	].forEach((testCase) => {
 		it(`should parse ${testCase.description}`, function() {

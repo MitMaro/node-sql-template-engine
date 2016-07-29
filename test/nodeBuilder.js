@@ -63,7 +63,7 @@ module.exports = {
 		};
 	},
 	andConditional(left, right) {
-		module.exports.binaryExpression(left, right, OPERATOR_AND);
+		return module.exports.binaryExpression(left, right, OPERATOR_AND);
 	},
 	notConditional(expression) {
 		return {
