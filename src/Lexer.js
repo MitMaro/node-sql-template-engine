@@ -170,7 +170,6 @@ class Lexer {
 		return false;
 	}
 
-
 	// scan up to the next delimiter
 	scanToNextDelimiter() {
 		// if already at delimiter
@@ -190,6 +189,7 @@ class Lexer {
 	// scan pass the next delimiter
 	scanNextDelimiter() {
 		const delimiter = this.isAtDelimiter() || '';
+
 		this.pointer = this.pointer + delimiter.length;
 	}
 
@@ -197,9 +197,12 @@ class Lexer {
 		while (this.pointer < this.input.length) {
 			if (this.state === STATE_TEXT_LITERAL) {
 				const startIndex = this.pointer;
+
 				this.scanTextLiteral();
 				this.state = STATE_TAG;
+
 				const value = this.input.substring(startIndex, this.pointer);
+
 				if (!value.length) {
 					continue;
 				}
@@ -213,12 +216,15 @@ class Lexer {
 			}
 			else if (this.state === STATE_TAG || this.state === STATE_END_STRING) {
 				let type;
+
 				this.skipWhitespace();
+
 				let startIndex = this.pointer;
 
 				// scan until next delimiter
 				this.scanToNextDelimiter();
 				let value = this.input.substring(startIndex, this.pointer);
+
 				if (value.length) {
 					type = statementTypeLookup[value];
 					if (type) {
@@ -300,6 +306,7 @@ class Lexer {
 			}
 			else if (this.state === STATE_STRING) {
 				const startIndex = this.pointer;
+
 				this.scanString();
 				this.state = STATE_END_STRING;
 				yield {

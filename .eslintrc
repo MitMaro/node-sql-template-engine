@@ -8,8 +8,8 @@ rules:
     no-constant-condition:
         - error
         - checkLoops: false
-    newline-after-var: off
     no-extra-parens:
         - error
         - all
         - nestedBinaryExpressions: false
+    no-undefined: off

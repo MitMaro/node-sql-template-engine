@@ -8,7 +8,7 @@ const nb = require('../nodeBuilder');
 const {
 	OPERATOR_AND,
 	OPERATOR_OR,
-	OPERATOR_GREATER_THAN,
+	OPERATOR_GREATER_THAN
 } = require('../../src/constants');
 
 describe('Parser.generateExpression', function() {
@@ -123,6 +123,7 @@ describe('Parser.generateExpression', function() {
 			const ast = parser.generateAST();
 			// we only care about the expression in the condition
 			const condition = ast.statements[0].branches[0].condition;
+
 			expect(condition).to.deep.equal(testCase.expected);
 		});
 	});

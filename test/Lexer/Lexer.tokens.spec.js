@@ -154,21 +154,24 @@ describe('Lexer.tokens', function() {
 			const lexer = new Lexer(testCase.input.join('\n'));
 			const tokens = lexer.tokens();
 			const result = [];
-			
+
 			for (const value of tokens) {
 				if (value.subType !== 'EOF') {
 					result.push(value);
 				}
 			}
-			
+
 			expect(result).to.deep.equal(testCase.expected);
 		});
 	});
-	
+
 	it('should error with invalid state', function() {
 		const lexer = new Lexer('foo');
+
 		lexer.state = 'INVALID';
+
 		const tokens = lexer.tokens();
+
 		expect(() => tokens.next()).to.throw(/Invalid state incurred/);
 	});
 });

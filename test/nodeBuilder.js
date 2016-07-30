@@ -1,17 +1,8 @@
 'use strict';
 
 const {
-	OPERATOR_EQUALS,
-	OPERATOR_NOT_EQUALS,
-	OPERATOR_STRICT_EQUALS,
-	OPERATOR_STRICT_NOT_EQUALS,
 	OPERATOR_AND,
-	OPERATOR_OR,
 	OPERATOR_NOT,
-	OPERATOR_GREATER_THAN,
-	OPERATOR_LESS_THAN,
-	OPERATOR_GREATER_EQUAL_THAN,
-	OPERATOR_LESS_EQUAL_THAN,
 
 	PARSER_TYPE_ROOT,
 	PARSER_TYPE_TEXT_LITERAL,
@@ -33,7 +24,7 @@ module.exports = {
 	literal(value) {
 		return {
 			type: PARSER_TYPE_TEXT_LITERAL,
-			value: value
+			value
 		};
 	},
 	include(value) {
@@ -88,7 +79,7 @@ module.exports = {
 	},
 	conditional(condition, consequent) {
 		return {
-			condition: condition,
+			condition,
 			consequent
 		};
 	}

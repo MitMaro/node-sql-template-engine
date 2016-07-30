@@ -4,7 +4,6 @@ const expect = require('chai').expect;
 const Lexer = require('../../src/Lexer');
 
 describe('Lexer.isAtDelimiter', function() {
-	
 	// false test cases
 	[
 		{
@@ -50,10 +49,11 @@ describe('Lexer.isAtDelimiter', function() {
 	].forEach((testCase) => {
 		it(`should return false with ${testCase.description}`, function() {
 			const lexer = new Lexer(testCase.input);
+
 			expect(lexer.isAtDelimiter()).to.be.false;
 		});
 	});
-	
+
 	[
 		'(', ')', '"', '\'', '!', '>', '<',
 		'{{', '}}', '==', '!=', '&&', '||', '>=', '<=',
@@ -61,24 +61,27 @@ describe('Lexer.isAtDelimiter', function() {
 	].forEach((delimiter) => {
 		it(`should return ${delimiter} delimiter`, function() {
 			const lexer = new Lexer(delimiter);
+
 			expect(lexer.isAtDelimiter()).to.be.equal(delimiter);
 		});
 	});
-	
+
 	// the following need to be tested special because they are special characters
 	it(`should return space delimiter`, function() {
 		const lexer = new Lexer(' ');
+
 		expect(lexer.isAtDelimiter()).to.be.equal(' ');
 	});
-	
+
 	it(`should return tab delimiter`, function() {
 		const lexer = new Lexer('\t');
+
 		expect(lexer.isAtDelimiter()).to.be.equal('\t');
 	});
-	
+
 	it(`should return newline delimiter`, function() {
 		const lexer = new Lexer('\n');
+
 		expect(lexer.isAtDelimiter()).to.be.equal('\n');
 	});
-	
 });

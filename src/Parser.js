@@ -4,7 +4,6 @@ const ParserError = require('./error/Parser');
 
 const {
 	TOKEN_TYPE_VALUE,
-	TOKEN_TYPE_STATEMENT,
 	TOKEN_TYPE_UNARY_OPERATOR,
 	TOKEN_TYPE_BINARY_OPERATOR,
 
@@ -117,6 +116,7 @@ class Parser {
 		}
 
 		const token = this.nextTokens[n - 1];
+
 		return types ? Parser.checkTokenType(token, types) : token;
 	}
 
@@ -129,6 +129,7 @@ class Parser {
 
 	popToken() {
 		const token = this.tokens.next();
+
 		if (token.done) {
 			throw new ParserError('Unexpected end of tokens');
 		}
@@ -137,6 +138,7 @@ class Parser {
 
 	generateAST() {
 		const ast = this.generateRootNode();
+
 		this.getExpectedToken(TOKEN_STRUCTURE_EOF);
 		return ast;
 	}
@@ -180,6 +182,7 @@ class Parser {
 
 	generateLiteral() {
 		const token = this.getExpectedToken(TOKEN_STRUCTURE_TEXT_LITERAL);
+
 		return {
 			type: PARSER_TYPE_TEXT_LITERAL,
 			value: token.value
@@ -188,9 +191,9 @@ class Parser {
 
 	generateStatement() {
 		const token = this.lookahead(2, [TOKEN_STATEMENT_IF, TOKEN_STATEMENT_INCLUDE]);
+
 		return (
-			token.subType === TOKEN_STATEMENT_IF
-				? this.generateBranchStatement() : this.generateIncludeStatement()
+			token.subType === TOKEN_STATEMENT_IF ? this.generateBranchStatement() : this.generateIncludeStatement()
 		);
 	}
 
@@ -218,6 +221,7 @@ class Parser {
 			]);
 
 			let condition;
+
 			if (token.subType !== TOKEN_STATEMENT_ELSE) {
 				condition = this.generateExpression();
 			}
@@ -225,6 +229,7 @@ class Parser {
 
 			this.getExpectedToken(TOKEN_BOUNDARY_TAG_END);
 			const consequent = this.generateRootNode();
+
 			branches.push({
 				condition, consequent
 			});
@@ -250,6 +255,7 @@ class Parser {
 		]);
 
 		let value;
+
 		if (token.subType === TOKEN_VALUE_VARIABLE) {
 			value = {
 				type: PARSER_TYPE_VARIABLE,
@@ -281,6 +287,7 @@ class Parser {
 
 		while (true) {
 			let token = this.lookahead();
+
 			if (
 				token.type !== TOKEN_TYPE_BINARY_OPERATOR
 				|| PrecedenceTable[token.subType].precedence < minPrecedence
@@ -290,7 +297,7 @@ class Parser {
 			token = this.getExpectedToken(TOKEN_TYPE_BINARY_OPERATOR);
 			const precedenceInfo = PrecedenceTable[token.subType];
 			const nextPrecedence = precedenceInfo.precedence + 1;
-			// there currently is no right associative binary operator 
+			// there currently is no right associative binary operator
 			// const nextPrecedence = precedenceInfo.association === LEFT_ASSOCIATIVE
 			//	? precedenceInfo.precedence + 1 : precedenceInfo.precedence;
 
@@ -325,6 +332,7 @@ class Parser {
 
 	generateUnaryExpression() {
 		const token = this.getExpectedToken(TOKEN_TYPE_UNARY_OPERATOR);
+
 		return {
 			type: PARSER_TYPE_UNARY_OPERATOR,
 			operator: token.subType,
@@ -334,7 +342,9 @@ class Parser {
 
 	generateBracketExpression() {
 		this.getExpectedToken(TOKEN_BOUNDARY_BRACKET_OPEN);
+
 		const expression = this.generateExpression();
+
 		this.getExpectedToken(TOKEN_BOUNDARY_BRACKET_CLOSE);
 		return expression;
 	}
@@ -343,26 +353,28 @@ class Parser {
 		const token = this.getExpectedToken([
 			TOKEN_TYPE_VALUE, TOKEN_BOUNDARY_STRING_SINGLE, TOKEN_BOUNDARY_STRING_DOUBLE
 		]);
+
 		if (token.subType === TOKEN_VALUE_VARIABLE) {
 			return {
 				type: PARSER_TYPE_VARIABLE,
 				name: token.value
 			};
 		}
-		
+
 		let value;
+
 		if (token.subType === TOKEN_BOUNDARY_STRING_SINGLE || token.subType === TOKEN_BOUNDARY_STRING_DOUBLE) {
 			value = this.getExpectedToken(TOKEN_VALUE_STRING).value;
 			this.getExpectedToken(token.subType);
 		}
-		
+
 		if (token.subType === TOKEN_VALUE_FLOAT) {
 			value = parseFloat(token.value);
 		}
 		else if (token.subType === TOKEN_VALUE_INTEGER) {
 			value = parseInt(token.value, 10);
 		}
-		
+
 		return {
 			type: PARSER_TYPE_VALUE,
 			value
