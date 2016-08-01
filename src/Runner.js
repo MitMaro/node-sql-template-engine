@@ -1,6 +1,29 @@
 'use strict';
 
+const async = require('async');
+const fs = require('fs');
 const RuntimeError = require('./error/Runtime');
+
+const Parser = require('./Parser');
+const Lexer = require('./Lexer');
+
+// credit: http://stackoverflow.com/a/3886106/124861
+function isFloat(n){
+	return Number(n) === n && n % 1 !== 0;
+}
+
+function floatEqual(a, b, epsilon = Number.EPSILON) {
+		if (a === b) {
+			return true;
+		}
+
+		if (isNaN(a) || isNaN(b) || !isFinite(a) || !isFinite(b)) {
+			return false;
+		}
+
+		const diff = Math.abs(a - b);
+		return diff < epsilon ? true : diff <= Math.max(Math.abs(a), Math.abs(b)) * epsilon;
+}
 
 const {
 	OPERATOR_EQUALS,
@@ -15,7 +38,6 @@ const {
 	OPERATOR_GREATER_EQUAL_THAN,
 	OPERATOR_LESS_EQUAL_THAN,
 
-	PARSER_TYPE_ROOT,
 	PARSER_TYPE_TEXT_LITERAL,
 	PARSER_TYPE_INCLUDE,
 	PARSER_TYPE_VALUE,
@@ -26,43 +48,64 @@ const {
 } = require('./constants');
 
 class Runner {
-	constructor(ast, input) {
-		this.ast = ast;
-		this.input = input;
+	constructor() {
+		this.astCache = {};
 		this.result = [];
 	}
 
-	invoke() {
-		this.invokeRoot(this.ast);
+	invoke(ast, input, cb) {
+		this.result = [];
+		this.input = input;
+		this.loadSources(ast.sources, (err) => {
+			return err ? cb(err) : cb(null, this.invokeStatements(ast.statements));
+		});
 	}
 
-	invokeRoot(ast) {
-		for (const statement in ast.statements) {
+	loadSources(sources, cb) {
+		const tasks = {};
+
+		for (const value of sources) {
+			const path = value.type === PARSER_TYPE_VARIABLE ? this.getValueFromVariable(value.name) : value.value;
+			tasks[path] = fs.readFile.bind(fs, path);
+		}
+
+		async.parallel(tasks, (err, files) => {
+			if (err) {
+				return cb(err);
+			}
+			for (const f in files) {
+				this.astCache[f] = new Parser(new Lexer(files[f])).generateAST();
+			}
+			return cb();
+		});
+	}
+
+	invokeStatements(statements) {
+		for (const statement of statements) {
 			if (statement.type === PARSER_TYPE_TEXT_LITERAL) {
 				this.result.push(statement.value);
 			}
 			else if (statement.type === PARSER_TYPE_INCLUDE) {
 				this.invokeInclude(statement);
 			}
-			else (statement.type === PARSER_TYPE_BRANCH) {
+			else if (statement.type === PARSER_TYPE_BRANCH) {
 				this.invokeBranch(statement);
 			}
+			throw new RuntimeError(`Unexpected statement: ${statement}`);
 		}
 	}
 
 	invokeInclude(statement) {
-		const path = statement.value;
 
-		if (typeof path !== string) {
-			throw new RuntimeError('Non string type passed to include.')
-		}
-		// TODO: include other file
+		if ()
+
+		this.invoke(ast);
 	}
 
 	invokeBranch(statement) {
 		for (const branch of statement.branches) {
-			if (this.evaluateExpression(branch.condition)) {
-
+			if (branch.condition === undefined || this.evaluateExpression(branch.condition)) {
+				return this.invokeStatements(branch.consequent.statements);
 			}
 		}
 	}
@@ -78,36 +121,63 @@ class Runner {
 			return expression.value;
 		}
 		else if (expression.type === PARSER_TYPE_VARIABLE) {
-			return this.getValueFromVariable(expression.value);
+			return this.getValueFromVariable(expression.name);
 		}
 	}
 
 	evaluateBinaryExpression(expression) {
+		const leftValue = this.evaluateExpression(expression.left);
+		const rightValue = this.evaluateExpression(expression.right);
+
 		if (expression.operator === OPERATOR_EQUALS) {
-			return this.evaluateExpression(expression.left) == this.evaluateExpression(expression.right);
+			return this.evaluateEquals(leftValue, rightValue);
 		}
 
 		if (expression.operator === OPERATOR_NOT_EQUALS) {
-			return this.evaluateExpression(expression.left) != this.evaluateExpression(expression.right);
+			return !this.evaluateEquals(leftValue, rightValue);
 		}
 
 		if (expression.operator === OPERATOR_STRICT_EQUALS) {
-			return this.evaluateExpression(expression.left) === this.evaluateExpression(expression.right);
+			return this.evaluateEquals(leftValue, rightValue, true);
 		}
 
 		if (expression.operator === OPERATOR_STRICT_NOT_EQUALS) {
-			return this.evaluateExpression(expression.left) !== this.evaluateExpression(expression.right);
+			return !this.evaluateEquals(leftValue, rightValue, true);
+		}
+
+		if (expression.operator === OPERATOR_GREATER_EQUAL_THAN) {
+			return leftValue > rightValue || this.evaluateEquals(leftValue, rightValue);
+		}
+
+		if (expression.operator === OPERATOR_LESS_EQUAL_THAN) {
+			return leftValue < rightValue || this.evaluateEquals(leftValue, rightValue);
+		}
+
+		if (expression.operator === OPERATOR_GREATER_THAN) {
+			return leftValue > rightValue;
+		}
+
+		if (expression.operator === OPERATOR_LESS_THAN) {
+			return leftValue > rightValue;
 		}
 
 		if (expression.operator === OPERATOR_AND) {
-			return this.evaluateExpression(expression.left) && this.evaluateExpression(expression.right);
+			return leftValue && rightValue;
 		}
 
 		if (expression.operator === OPERATOR_OR) {
-			return this.evaluateExpression(expression.left) || this.evaluateExpression(expression.right);
+			return leftValue || rightValue;
 		}
 
 		throw new RuntimeError(`Unknown operator: ${expression.operator}`);
+	}
+
+	evaluateEquals(leftValue, rightValue, strict = false) {
+		if (isFloat(leftValue) && isFloat(rightValue)) {
+			return floatEqual(leftValue, rightValue);
+		}
+
+		return strict ? leftValue === rightValue : leftValue == rightValue;
 	}
 
 	evaluateUnaryExpression(expression) {
@@ -126,3 +196,5 @@ class Runner {
 	}
 
 }
+
+module.exports = Runner;

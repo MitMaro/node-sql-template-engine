@@ -137,9 +137,10 @@ class Parser {
 	}
 
 	generateAST() {
+		this.sources = [];
 		const ast = this.generateRootNode();
-
 		this.getExpectedToken(TOKEN_STRUCTURE_EOF);
+		ast.sources = this.sources;
 		return ast;
 	}
 
@@ -275,6 +276,7 @@ class Parser {
 
 		this.getExpectedToken(TOKEN_BOUNDARY_TAG_END);
 
+		this.sources.push(value);
 		return {
 			type: PARSER_TYPE_INCLUDE,
 			value

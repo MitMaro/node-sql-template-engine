@@ -23,5 +23,8 @@
     "eslint-plugin-strict-newline": "^1.0.0",
     "istanbul": "^0.4.4",
     "mocha": "^2.5.3"
+  },
+  "dependencies": {
+    "async": "^2.0.1"
   }
 }
