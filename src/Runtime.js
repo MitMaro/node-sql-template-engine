@@ -8,21 +8,22 @@ const Parser = require('./Parser');
 const Lexer = require('./Lexer');
 
 // credit: http://stackoverflow.com/a/3886106/124861
-function isFloat(n){
+function isFloat(n) {
 	return Number(n) === n && n % 1 !== 0;
 }
 
 function floatEqual(a, b, epsilon = Number.EPSILON) {
-		if (a === b) {
-			return true;
-		}
+	if (a === b) {
+		return true;
+	}
 
-		if (isNaN(a) || isNaN(b) || !isFinite(a) || !isFinite(b)) {
-			return false;
-		}
+	if (isNaN(a) || isNaN(b) || !isFinite(a) || !isFinite(b)) {
+		return false;
+	}
 
-		const diff = Math.abs(a - b);
-		return diff < epsilon ? true : diff <= Math.max(Math.abs(a), Math.abs(b)) * epsilon;
+	const diff = Math.abs(a - b);
+
+	return diff < epsilon ? true : diff <= Math.max(Math.abs(a), Math.abs(b)) * epsilon;
 }
 
 const {
@@ -66,6 +67,7 @@ class Runner {
 
 		for (const value of sources) {
 			const path = value.type === PARSER_TYPE_VARIABLE ? this.getValueFromVariable(value.name) : value.value;
+
 			tasks[path] = fs.readFile.bind(fs, path);
 		}
 
@@ -96,10 +98,17 @@ class Runner {
 	}
 
 	invokeInclude(statement) {
+		let path;
 
-		if ()
-
-		this.invoke(ast);
+		if (statement.value.type === PARSER_TYPE_VARIABLE) {
+			path = this.getValueFromVariable(statement.value.name);
+		}
+		else {
+			path = statement.value.value;
+		}
+		if (this.astCache[path]) {
+			this.invokeStatements(this.astCache[path].statements);
+		}
 	}
 
 	invokeBranch(statement) {
@@ -108,6 +117,8 @@ class Runner {
 				return this.invokeStatements(branch.consequent.statements);
 			}
 		}
+		// no branch executed
+		return null;
 	}
 
 	evaluateExpression(expression) {
@@ -123,6 +134,7 @@ class Runner {
 		else if (expression.type === PARSER_TYPE_VARIABLE) {
 			return this.getValueFromVariable(expression.name);
 		}
+		throw new RuntimeError(`Unknown expression type: ${expression.type}`);
 	}
 
 	evaluateBinaryExpression(expression) {
@@ -176,7 +188,7 @@ class Runner {
 		if (isFloat(leftValue) && isFloat(rightValue)) {
 			return floatEqual(leftValue, rightValue);
 		}
-
+		// eslint-disable-next-line eqeqeq
 		return strict ? leftValue === rightValue : leftValue == rightValue;
 	}
 
@@ -189,7 +201,7 @@ class Runner {
 	}
 
 	getValueFromVariable(name) {
-		if (!name in this.input) {
+		if (!(name in this.input)) {
 			throw new RuntimeError(`Unset variable: ${name}`);
 		}
 		return this.input[name];

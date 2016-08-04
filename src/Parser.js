@@ -139,6 +139,7 @@ class Parser {
 	generateAST() {
 		this.sources = [];
 		const ast = this.generateRootNode();
+
 		this.getExpectedToken(TOKEN_STRUCTURE_EOF);
 		ast.sources = this.sources;
 		return ast;

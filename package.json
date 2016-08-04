@@ -22,7 +22,7 @@
     "eslint-config-mitmaro": "^2.0.0",
     "eslint-plugin-strict-newline": "^1.0.0",
     "istanbul": "^0.4.4",
-    "mocha": "^2.5.3"
+    "mocha": "^3.0.0"
   },
   "dependencies": {
     "async": "^2.0.1"

@@ -36,7 +36,7 @@ describe('Parser.generate', function() {
 			nb.include(nb.value('foo'))
 		];
 
-		expect(result.sources).to.deep.equal([nb.value('foo')]);
+		expect(result.sources).to.deep.equal([ nb.value('foo') ]);
 		expect(result.statements).to.deep.equal(expected);
 	});
 
@@ -46,14 +46,14 @@ describe('Parser.generate', function() {
 			nb.include(nb.variable('foo'))
 		];
 
-		expect(result.sources).to.deep.equal([nb.variable('foo')]);
+		expect(result.sources).to.deep.equal([ nb.variable('foo') ]);
 		expect(result.statements).to.deep.equal(expected);
 	});
 
 	it('should set sources from inside if blocks', function() {
 		const result = getParserResult('{{if bar}}{{include baz}}{{fi}}');
 
-		expect(result.sources).to.deep.equal([nb.variable('baz')]);
+		expect(result.sources).to.deep.equal([ nb.variable('baz') ]);
 	});
 
 	it('should parse with basic if statement', function() {
