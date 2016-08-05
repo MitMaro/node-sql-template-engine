@@ -98,14 +98,10 @@ class Runner {
 	}
 
 	invokeInclude(statement) {
-		let path;
+		const path = statement.value.type === PARSER_TYPE_VARIABLE
+			? this.getValueFromVariable(statement.value.name)
+			: statement.value.value;
 
-		if (statement.value.type === PARSER_TYPE_VARIABLE) {
-			path = this.getValueFromVariable(statement.value.name);
-		}
-		else {
-			path = statement.value.value;
-		}
 		if (this.astCache[path]) {
 			this.invokeStatements(this.astCache[path].statements);
 		}

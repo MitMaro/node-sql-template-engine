@@ -2,19 +2,20 @@
 
 const expect = require('chai').expect;
 const Runtime = require('../../src/Runtime');
+const nb = require('../nodeBuilder');
 
 describe('Runtime.getValueFromVariable', function() {
-	it('should get matching input data', function() {
+	it('should return on not operator', function() {
 		const runtime = new Runtime();
+		const expression = nb.notConditional(nb.value(true));
 
-		runtime.input = { foo: 'bar' };
-		expect(runtime.getValueFromVariable('foo')).to.equal('bar');
+		expect(runtime.evaluateUnaryExpression(expression)).to.be.false;
 	});
 
-	it('should error on missing input data', function() {
+	it('should error on unknown operator', function() {
 		const runtime = new Runtime();
+		const expression = nb.invalidExpression();
 
-		runtime.input = {};
-		expect(() => runtime.getValueFromVariable('foo')).to.throw(/Unset variable/);
+		expect(() => runtime.evaluateUnaryExpression(expression)).to.throw(/Unknown operator/);
 	});
 });

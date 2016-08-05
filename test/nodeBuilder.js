@@ -82,5 +82,13 @@ module.exports = {
 			condition,
 			consequent
 		};
+	},
+	invalidExpression() {
+		return {
+			type: 'INVALID_EXPRESSION',
+			left: 'left',
+			right: 'right',
+			operator: 'INVALID'
+		};
 	}
 };
