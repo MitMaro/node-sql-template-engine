@@ -3,3 +3,4 @@ extends: mitmaro/mocha
 rules:
     func-names: off
     no-undefined: off
+    max-nested-callbacks: off

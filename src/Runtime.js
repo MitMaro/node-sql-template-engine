@@ -7,9 +7,9 @@ const RuntimeError = require('./error/Runtime');
 const Parser = require('./Parser');
 const Lexer = require('./Lexer');
 
-// credit: http://stackoverflow.com/a/3886106/124861
-function isFloat(n) {
-	return Number(n) === n && n % 1 !== 0;
+// credit: http://stackoverflow.com/a/9716515/124861
+function isNumeric(n) {
+	return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
 function floatEqual(a, b, epsilon = Number.EPSILON) {
@@ -17,13 +17,9 @@ function floatEqual(a, b, epsilon = Number.EPSILON) {
 		return true;
 	}
 
-	if (isNaN(a) || isNaN(b) || !isFinite(a) || !isFinite(b)) {
-		return false;
-	}
-
 	const diff = Math.abs(a - b);
 
-	return diff < epsilon ? true : diff <= Math.max(Math.abs(a), Math.abs(b)) * epsilon;
+	return diff <= epsilon || diff <= Math.min(Math.abs(a), Math.abs(b)) * epsilon;
 }
 
 const {
@@ -49,7 +45,8 @@ const {
 } = require('./constants');
 
 class Runner {
-	constructor() {
+	constructor(options = { epsilon: Number.EPSILON }) {
+		this.epsilon = options.epsilon;
 		this.astCache = {};
 		this.result = [];
 	}
@@ -181,8 +178,8 @@ class Runner {
 	}
 
 	evaluateEquals(leftValue, rightValue, strict = false) {
-		if (isFloat(leftValue) && isFloat(rightValue)) {
-			return floatEqual(leftValue, rightValue);
+		if (isNumeric(leftValue) && isNumeric(rightValue)) {
+			return floatEqual(leftValue, rightValue, this.epsilon);
 		}
 		// eslint-disable-next-line eqeqeq
 		return strict ? leftValue === rightValue : leftValue == rightValue;
