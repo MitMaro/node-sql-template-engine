@@ -86,8 +86,8 @@ module.exports = {
 	invalidExpression() {
 		return {
 			type: 'INVALID_EXPRESSION',
-			left: 'left',
-			right: 'right',
+			left: module.exports.value('left'),
+			right: module.exports.value('right'),
 			operator: 'INVALID'
 		};
 	}

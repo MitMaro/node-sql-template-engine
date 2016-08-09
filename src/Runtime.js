@@ -163,7 +163,7 @@ class Runner {
 		}
 
 		if (expression.operator === OPERATOR_LESS_THAN) {
-			return leftValue > rightValue;
+			return leftValue < rightValue;
 		}
 
 		if (expression.operator === OPERATOR_AND) {
