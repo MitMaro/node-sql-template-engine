@@ -90,7 +90,9 @@ class Runner {
 			else if (statement.type === PARSER_TYPE_BRANCH) {
 				this.invokeBranch(statement);
 			}
-			throw new RuntimeError(`Unexpected statement: ${statement}`);
+			else {
+				throw new RuntimeError(`Unexpected statement: ${statement}`);
+			}
 		}
 	}
 
