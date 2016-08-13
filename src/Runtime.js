@@ -3,6 +3,7 @@
 const async = require('async');
 const fs = require('fs');
 const RuntimeError = require('./error/Runtime');
+const path = require('path');
 
 const Parser = require('./Parser');
 const Lexer = require('./Lexer');
@@ -63,9 +64,13 @@ class Runner {
 		const tasks = {};
 
 		for (const value of sources) {
-			const path = value.type === PARSER_TYPE_VARIABLE ? this.getValueFromVariable(value.name) : value.value;
+			const templatePath = path.resolve(
+				value.type === PARSER_TYPE_VARIABLE
+					? this.getValueFromVariable(value.name)
+					: value.value
+			);
 
-			tasks[path] = fs.readFile.bind(fs, path);
+			tasks[templatePath] = fs.readFile.bind(fs, templatePath);
 		}
 
 		async.parallel(tasks, (err, files) => {
@@ -97,13 +102,11 @@ class Runner {
 	}
 
 	invokeInclude(statement) {
-		const path = statement.value.type === PARSER_TYPE_VARIABLE
+		const templatePath = statement.value.type === PARSER_TYPE_VARIABLE
 			? this.getValueFromVariable(statement.value.name)
 			: statement.value.value;
 
-		if (this.astCache[path]) {
-			this.invokeStatements(this.astCache[path].statements);
-		}
+		this.invokeStatements(this.astCache[templatePath].statements);
 	}
 
 	invokeBranch(statement) {
