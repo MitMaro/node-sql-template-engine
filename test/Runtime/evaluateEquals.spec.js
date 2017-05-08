@@ -1,7 +1,7 @@
 'use strict';
 
-const expect = require('chai').expect;
-const Runtime = require('../../src/Runtime');
+import {expect} from 'chai';
+import Runtime from '../../src/Runtime';
 
 const runtime = new Runtime();
 

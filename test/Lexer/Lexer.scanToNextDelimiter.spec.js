@@ -1,7 +1,7 @@
 'use strict';
 
-const expect = require('chai').expect;
-const Lexer = require('../../src/Lexer');
+import {expect} from 'chai';
+import Lexer from '../../src/Lexer';
 
 describe('Lexer.scanToNextDelimiter', function() {
 	it('should scan with empty string', function() {

@@ -1,7 +1,7 @@
 'use strict';
 
-const expect = require('chai').expect;
-const Runtime = require('../../src/Runtime');
+import {expect} from 'chai';
+import Runtime from '../../src/Runtime';
 
 describe('Runtime.evaluateUnaryExpression', function() {
 	it('should get matching input data', function() {
@@ -11,10 +11,10 @@ describe('Runtime.evaluateUnaryExpression', function() {
 		expect(runtime.getValueFromVariable('foo')).to.equal('bar');
 	});
 
-	it('should error on missing input data', function() {
+	it('should return undefined on missing input data', function() {
 		const runtime = new Runtime();
 
 		runtime.input = {};
-		expect(() => runtime.getValueFromVariable('foo')).to.throw(/Unset variable/);
+		expect(runtime.getValueFromVariable('foo')).to.be.undefined;
 	});
 });

@@ -1,6 +1,6 @@
 'use strict';
 
-const {
+import {
 	TOKEN_TYPE_VALUE,
 	TOKEN_TYPE_STRUCTURE,
 	TOKEN_TYPE_STATEMENT,
@@ -21,143 +21,172 @@ const {
 	TOKEN_BOUNDARY_STRING_DOUBLE,
 	TOKEN_STATEMENT_IF,
 	OPERATOR_AND,
-	OPERATOR_NOT
-} = require('../src/constants');
+	OPERATOR_NOT,
+} from '../src/constants';
 
-module.exports = {
-	textLiteral(index, value) {
-		return {
-			type: TOKEN_TYPE_STRUCTURE,
-			subType: TOKEN_STRUCTURE_TEXT_LITERAL,
-			startIndex: index,
-			endIndex: index + value.length,
-			value
-		};
-	},
-	endOfFile(length) {
-		return {
-			type: TOKEN_TYPE_STRUCTURE,
-			subType: TOKEN_STRUCTURE_EOF,
-			startIndex: length,
-			endIndex: length,
-			value: null
-		};
-	},
-	startTag(index) {
-		return {
-			type: TOKEN_TYPE_BOUNDARY,
-			subType: TOKEN_BOUNDARY_TAG_START,
-			startIndex: index,
-			endIndex: index + 2,
-			value: '{{'
-		};
-	},
-	endTag(index) {
-		return {
-			type: TOKEN_TYPE_BOUNDARY,
-			subType: TOKEN_BOUNDARY_TAG_END,
-			startIndex: index,
-			endIndex: index + 2,
-			value: '}}'
-		};
-	},
-	ifStatement(index) {
-		return {
-			type: TOKEN_TYPE_STATEMENT,
-			subType: TOKEN_STATEMENT_IF,
-			startIndex: index,
-			endIndex: index + 2,
-			value: 'if'
-		};
-	},
-	variable(index, value) {
-		return {
-			type: TOKEN_TYPE_VALUE,
-			subType: TOKEN_VALUE_VARIABLE,
-			startIndex: index,
-			endIndex: index + value.length,
-			value
-		};
-	},
-	string(index, value) {
-		return {
-			type: TOKEN_TYPE_VALUE,
-			subType: TOKEN_VALUE_STRING,
-			startIndex: index,
-			endIndex: index + value.length,
-			value
-		};
-	},
-	stringSingle(index) {
-		return {
-			type: TOKEN_TYPE_BOUNDARY,
-			subType: TOKEN_BOUNDARY_STRING_SINGLE,
-			startIndex: index,
-			endIndex: index + 1,
-			value: '\''
-		};
-	},
-	stringDouble(index) {
-		return {
-			type: TOKEN_TYPE_BOUNDARY,
-			subType: TOKEN_BOUNDARY_STRING_DOUBLE,
-			startIndex: index,
-			endIndex: index + 1,
-			value: '"'
-		};
-	},
-	bracketOpen(index) {
-		return {
-			type: TOKEN_TYPE_BOUNDARY,
-			subType: TOKEN_BOUNDARY_BRACKET_OPEN,
-			startIndex: index,
-			endIndex: index + 1,
-			value: '('
-		};
-	},
-	bracketClose(index) {
-		return {
-			type: TOKEN_TYPE_BOUNDARY,
-			subType: TOKEN_BOUNDARY_BRACKET_CLOSE,
-			startIndex: index,
-			endIndex: index + 1,
-			value: ')'
-		};
-	},
-	andOperator(index) {
-		return {
-			type: TOKEN_TYPE_BINARY_OPERATOR,
-			subType: OPERATOR_AND,
-			startIndex: index,
-			endIndex: index + 2,
-			value: '&&'
-		};
-	},
-	notOperator(index) {
-		return {
-			type: TOKEN_TYPE_UNARY_OPERATOR,
-			subType: OPERATOR_NOT,
-			startIndex: index,
-			endIndex: index + 1,
-			value: '!'
-		};
-	},
-	integer(index, value) {
-		return {
-			type: TOKEN_TYPE_VALUE,
-			subType: TOKEN_VALUE_INTEGER,
-			startIndex: index,
-			endIndex: index + value.length,
-			value
-		};
-	},
-	float(index, value) {
-		return {
-			type: TOKEN_TYPE_VALUE,
-			subType: TOKEN_VALUE_FLOAT,
-			startIndex: index,
-			endIndex: index + value.length,
-			value
-		};
-	}
-};
+
+export function textLiteral(index, value, column, row = 0) {
+	return {
+		type: TOKEN_TYPE_STRUCTURE,
+		subType: TOKEN_STRUCTURE_TEXT_LITERAL,
+		column: column === undefined ? index : column,
+		row,
+		startIndex: index,
+		endIndex: index + value.length,
+		value
+	};
+}
+export function endOfFile(length, column, row = 0) {
+	return {
+		type: TOKEN_TYPE_STRUCTURE,
+		subType: TOKEN_STRUCTURE_EOF,
+		column: column === undefined ? length : column,
+		row,
+		startIndex: length,
+		endIndex: length,
+		value: null
+	};
+}
+export function startTag(index, column, row = 0) {
+	return {
+		type: TOKEN_TYPE_BOUNDARY,
+		subType: TOKEN_BOUNDARY_TAG_START,
+		column: column === undefined ? index : column,
+		row,
+		startIndex: index,
+		endIndex: index + 2,
+		value: '{{'
+	};
+}
+export function endTag(index, column, row = 0) {
+	return {
+		type: TOKEN_TYPE_BOUNDARY,
+		subType: TOKEN_BOUNDARY_TAG_END,
+		column: column === undefined ? index : column,
+		row,
+		startIndex: index,
+		endIndex: index + 2,
+		value: '}}'
+	};
+}
+export function ifStatement(index, column, row = 0) {
+	return {
+		type: TOKEN_TYPE_STATEMENT,
+		subType: TOKEN_STATEMENT_IF,
+		column: column === undefined ? index : column,
+		row,
+		startIndex: index,
+		endIndex: index + 2,
+		value: 'if'
+	};
+}
+export function variable(index, value, column, row = 0) {
+	return {
+		type: TOKEN_TYPE_VALUE,
+		subType: TOKEN_VALUE_VARIABLE,
+		column: column === undefined ? index : column,
+		row,
+		startIndex: index,
+		endIndex: index + value.length,
+		value
+	};
+}
+export function string(index, value, column, row = 0) {
+	return {
+		type: TOKEN_TYPE_VALUE,
+		subType: TOKEN_VALUE_STRING,
+		column: column === undefined ? index : column,
+		row,
+		startIndex: index,
+		endIndex: index + value.length,
+		value
+	};
+}
+export function stringSingle(index, column, row = 0) {
+	return {
+		type: TOKEN_TYPE_BOUNDARY,
+		subType: TOKEN_BOUNDARY_STRING_SINGLE,
+		column: column === undefined ? index : column,
+		row,
+		startIndex: index,
+		endIndex: index + 1,
+		value: '\''
+	};
+}
+export function stringDouble(index, column, row = 0) {
+	return {
+		type: TOKEN_TYPE_BOUNDARY,
+		subType: TOKEN_BOUNDARY_STRING_DOUBLE,
+		column: column === undefined ? index : column,
+		row,
+		startIndex: index,
+		endIndex: index + 1,
+		value: '"'
+	};
+}
+export function bracketOpen(index, column, row = 0) {
+	return {
+		type: TOKEN_TYPE_BOUNDARY,
+		subType: TOKEN_BOUNDARY_BRACKET_OPEN,
+		column: column === undefined ? index : column,
+		row,
+		startIndex: index,
+		endIndex: index + 1,
+		value: '('
+	};
+}
+export function bracketClose(index, column, row = 0) {
+	return {
+		type: TOKEN_TYPE_BOUNDARY,
+		subType: TOKEN_BOUNDARY_BRACKET_CLOSE,
+		column: column === undefined ? index : column,
+		row,
+		startIndex: index,
+		endIndex: index + 1,
+		value: ')'
+	};
+}
+export function andOperator(index, column, row = 0) {
+	return {
+		type: TOKEN_TYPE_BINARY_OPERATOR,
+		subType: OPERATOR_AND,
+		column: column === undefined ? index : column,
+		row,
+		startIndex: index,
+		endIndex: index + 2,
+		value: '&&'
+	};
+}
+export function notOperator(index, column, row = 0) {
+	return {
+		type: TOKEN_TYPE_UNARY_OPERATOR,
+		subType: OPERATOR_NOT,
+		column: column === undefined ? index : column,
+		row,
+		startIndex: index,
+		endIndex: index + 1,
+		value: '!'
+	};
+}
+export function integer(index, value, column, row = 0) {
+	return {
+		type: TOKEN_TYPE_VALUE,
+		subType: TOKEN_VALUE_INTEGER,
+		column: column === undefined ? index : column,
+		row,
+		startIndex: index,
+		endIndex: index + value.length,
+		value
+	};
+}
+export function float(index, value, column, row = 0) {
+	return {
+		type: TOKEN_TYPE_VALUE,
+		subType: TOKEN_VALUE_FLOAT,
+		column: column === undefined ? index : column,
+		row,
+		startIndex: index,
+		endIndex: index + value.length,
+		value
+	};
+}

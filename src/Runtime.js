@@ -1,29 +1,17 @@
 'use strict';
 
-const async = require('async');
-const fs = require('fs');
-const RuntimeError = require('./error/Runtime');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import promisify from 'es6-promisify';
+import get from 'lodash.get';
+import RuntimeError, {
+	RuntimeExpressionError,
+	RuntimeReadError
+} from './error/Runtime';
+import Parser from './Parser';
+import Lexer from './Lexer';
 
-const Parser = require('./Parser');
-const Lexer = require('./Lexer');
-
-// credit: http://stackoverflow.com/a/9716515/124861
-function isNumeric(n) {
-	return !isNaN(parseFloat(n)) && isFinite(n);
-}
-
-function floatEqual(a, b, epsilon = Number.EPSILON) {
-	if (a === b) {
-		return true;
-	}
-
-	const diff = Math.abs(a - b);
-
-	return diff <= epsilon || diff <= Math.min(Math.abs(a), Math.abs(b)) * epsilon;
-}
-
-const {
+import {
 	OPERATOR_EQUALS,
 	OPERATOR_NOT_EQUALS,
 	OPERATOR_STRICT_EQUALS,
@@ -43,76 +31,126 @@ const {
 	PARSER_TYPE_BRANCH,
 	PARSER_TYPE_UNARY_OPERATOR,
 	PARSER_TYPE_BINARY_OPERATOR
-} = require('./constants');
+} from './constants';
 
-class Runner {
-	constructor(options = { epsilon: Number.EPSILON }) {
-		this.epsilon = options.epsilon;
-		this.astCache = {};
+const readFile = promisify(fs.readFile);
+
+// credit: http://stackoverflow.com/a/9716515/124861
+function isNumeric(n) {
+	return !isNaN(parseFloat(n)) && isFinite(n);
+}
+
+function floatEqual(a, b, epsilon) {
+	if (a === b) {
+		return true;
+	}
+	const diff = Math.abs(a - b);
+	return diff <= epsilon || diff <= Math.min(Math.abs(a), Math.abs(b)) * epsilon;
+}
+
+export default class Runner {
+	constructor(options = {}) {
+		this.epsilon = options.epsilon || Number.EPSILON;
+		this.rootPath = options.rootPath || process.cwd();
+		this.astCache = new Map();
 		this.result = [];
 	}
 
-	invoke(ast, input, cb) {
+	async invoke(ast, input) {
 		this.result = [];
 		this.input = input;
-		this.loadSources(ast.sources, (err) => {
-			return err ? cb(err) : cb(null, this.invokeStatements(ast.statements));
-		});
+		this.currentDataPath = '';
+		await this.invokeStatements(ast.statements);
+		return this.result;
 	}
 
-	loadSources(sources, cb) {
-		const tasks = {};
-
-		for (const value of sources) {
-			const templatePath = path.resolve(
-				value.type === PARSER_TYPE_VARIABLE
-					? this.getValueFromVariable(value.name)
-					: value.value
-			);
-
-			tasks[templatePath] = fs.readFile.bind(fs, templatePath);
+	async loadSource(templatePath) {
+		if (!this.astCache.has(templatePath)) {
+			const templateContents = await readFile(templatePath, 'UTF-8');
+			this.astCache.set(templatePath, new Parser(new Lexer(templateContents)).generateAST());
 		}
-
-		async.parallel(tasks, (err, files) => {
-			if (err) {
-				return cb(err);
-			}
-			for (const f in files) {
-				this.astCache[f] = new Parser(new Lexer(files[f])).generateAST();
-			}
-			return cb();
-		});
+		return this.astCache.get(templatePath);
 	}
 
-	invokeStatements(statements) {
+	async invokeStatements(statements) {
 		for (const statement of statements) {
 			if (statement.type === PARSER_TYPE_TEXT_LITERAL) {
 				this.result.push(statement.value);
 			}
 			else if (statement.type === PARSER_TYPE_INCLUDE) {
-				this.invokeInclude(statement);
+				await this.invokeInclude(statement);
 			}
 			else if (statement.type === PARSER_TYPE_BRANCH) {
-				this.invokeBranch(statement);
+				await this.invokeBranch(statement);
 			}
 			else {
-				throw new RuntimeError(`Unexpected statement: ${statement}`);
+				throw new RuntimeError('Unexpected statement', statement);
 			}
 		}
 	}
 
-	invokeInclude(statement) {
-		const templatePath = statement.value.type === PARSER_TYPE_VARIABLE
+	async invokeInclude(statement) {
+		let templatePath = statement.value.type === PARSER_TYPE_VARIABLE
 			? this.getValueFromVariable(statement.value.name)
 			: statement.value.value;
 
-		this.invokeStatements(this.astCache[templatePath].statements);
+		templatePath = path.isAbsolute(templatePath)
+			? path.resolve(templatePath)
+			: path.resolve(this.rootPath, templatePath);
+
+		const previousPath = this.currentDataPath;
+		if (statement.dataPath) {
+			try {
+				this.currentDataPath = this.currentDataPath
+					? `${this.currentDataPath}.${this.evaluateExpression(statement.dataPath)}`
+					: this.evaluateExpression(statement.dataPath)
+				;
+			}
+			catch(e) {
+				/* istanbul ignore else */
+				if (e instanceof RuntimeExpressionError) {
+					throw new RuntimeError(e.message, statement, e);
+				}
+				// this technically shouldn't be possible
+				/* istanbul ignore next */
+				throw e;
+			}
+		}
+		let ast;
+		try {
+			ast = await this.loadSource(templatePath);
+		}
+		catch(e) {
+			/* istanbul ignore else */
+			if (e.code === 'EACCES') {
+				throw new RuntimeReadError('Permission denied', statement, templatePath);
+			}
+			else if (e.code === 'ENOENT') {
+				throw new RuntimeReadError('File not found', statement, templatePath);
+			}
+			// who knows what else a file read may throw
+			/* istanbul ignore next */
+			throw e;
+		}
+		await this.invokeStatements(ast.statements);
+		this.currentDataPath = previousPath;
 	}
 
-	invokeBranch(statement) {
+	async invokeBranch(statement) {
 		for (const branch of statement.branches) {
-			if (branch.condition === undefined || this.evaluateExpression(branch.condition)) {
-				return this.invokeStatements(branch.consequent.statements);
+			try {
+				if (branch.condition === undefined || this.evaluateExpression(branch.condition)) {
+					return await this.invokeStatements(branch.consequent.statements);
+				}
+			}
+			catch(e) {
+				/* istanbul ignore else */
+				if (e instanceof RuntimeExpressionError) {
+					throw new RuntimeError(e.message, statement, e);
+				}
+				// this technically shouldn't be possible
+				/* istanbul ignore next */
+				throw e;
 			}
 		}
 		// no branch executed
@@ -132,7 +170,7 @@ class Runner {
 		else if (expression.type === PARSER_TYPE_VARIABLE) {
 			return this.getValueFromVariable(expression.name);
 		}
-		throw new RuntimeError(`Unknown expression type: ${expression.type}`);
+		throw new RuntimeExpressionError('Unknown expression type');
 	}
 
 	evaluateBinaryExpression(expression) {
@@ -179,7 +217,7 @@ class Runner {
 			return leftValue || rightValue;
 		}
 
-		throw new RuntimeError(`Unknown operator: ${expression.operator}`);
+		throw new RuntimeExpressionError('Unknown operator', expression);
 	}
 
 	evaluateEquals(leftValue, rightValue, strict = false) {
@@ -195,16 +233,25 @@ class Runner {
 			return !this.evaluateExpression(expression.expression);
 		}
 
-		throw new RuntimeError(`Unknown operator: ${expression.operator}`);
+		throw new RuntimeExpressionError('Unknown operator', expression);
 	}
 
 	getValueFromVariable(name) {
-		if (!(name in this.input)) {
-			throw new RuntimeError(`Unset variable: ${name}`);
-		}
-		return this.input[name];
+		return get(this.input, this.currentDataPath ? `${this.currentDataPath}.${name}` : name);
 	}
-
 }
 
-module.exports = Runner;
+// const util = require('util');
+//
+// const inputFile = fs.readFileSync(process.argv[2], 'UTF-8');
+//
+// const ast = new Parser(new Lexer(inputFile)).generateAST();
+// console.log('AST');
+// console.log(util.inspect(ast, {color: true, depth: null}));
+// const runner = new Runner(path.resolve('..', 'test', 'Runtime', 'fixtures'));
+//
+// console.log('Result');
+// runner
+// 	.invoke(ast, JSON.parse(process.argv[3]))
+// 	.then((result) => console.log(result.join('\n')))
+// ;

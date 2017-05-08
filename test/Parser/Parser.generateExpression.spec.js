@@ -1,48 +1,61 @@
 'use strict';
 
-const expect = require('chai').expect;
-const Parser = require('../../src/Parser');
-const Lexer = require('../../src/Lexer');
-const nb = require('../nodeBuilder');
+import {expect} from 'chai';
+import Parser from '../../src/Parser';
+import Lexer from '../../src/Lexer';
+import {
+	binaryExpression,
+	variable as nbVariable,
+	value as nbValue,
+	notConditional
+} from '../nodeBuilder';
 
-const {
+import {
 	OPERATOR_AND,
 	OPERATOR_OR,
-	OPERATOR_GREATER_THAN
-} = require('../../src/constants');
+	OPERATOR_GREATER_THAN,
+} from '../../src/constants';
+
+// indexes all need to be increased for {{if <input> }}
+function variable(name, column) {
+	return nbVariable(name, column + 5, 0);
+}
+function value(name, column) {
+	return nbValue(name, column + 5, 0);
+}
 
 describe('Parser.generateExpression', function() {
 	[
 		{
 			description: 'with base binary operator',
 			input: 'a > b',
-			expected: nb.binaryExpression(
-					nb.variable('a'),
-					nb.variable('b'),
+			expected: binaryExpression(
+					variable('a', 0),
+					variable('b', 4),
 					OPERATOR_GREATER_THAN
 			)
 		},
 		{
 			description: 'with expression chain',
 			input: 'a > b > c',
-			expected: nb.binaryExpression(
-					nb.binaryExpression(
-						nb.variable('a'),
-						nb.variable('b'),
+			expected: binaryExpression(
+					binaryExpression(
+						variable('a', 0),
+						variable('b', 4),
 						OPERATOR_GREATER_THAN
 					),
-					nb.variable('c'),
+					variable('c', 8),
 					OPERATOR_GREATER_THAN
 			)
 		},
 		{
 			description: 'with brackets on the right',
 			input: 'a > (b > c)',
-			expected: nb.binaryExpression(
-					nb.variable('a'),
-					nb.binaryExpression(
-							nb.variable('b'),
-							nb.variable('c'),
+			expected: binaryExpression(
+					variable('a', 0),
+					binaryExpression(
+							variable('b', 5),
+							variable('c', 9),
 							OPERATOR_GREATER_THAN
 					),
 					OPERATOR_GREATER_THAN
@@ -51,24 +64,24 @@ describe('Parser.generateExpression', function() {
 		{
 			description: 'with brackets on the left',
 			input: '(a > b) > c',
-			expected: nb.binaryExpression(
-					nb.binaryExpression(
-							nb.variable('a'),
-							nb.variable('b'),
+			expected: binaryExpression(
+					binaryExpression(
+							variable('a', 1),
+							variable('b', 5),
 							OPERATOR_GREATER_THAN
 					),
-					nb.variable('c'),
+					variable('c', 10),
 					OPERATOR_GREATER_THAN
 			)
 		},
 		{
 			description: 'with ors and ands',
 			input: 'a || b && c',
-			expected: nb.binaryExpression(
-					nb.variable('a'),
-					nb.binaryExpression(
-							nb.variable('b'),
-							nb.variable('c'),
+			expected: binaryExpression(
+					variable('a', 0),
+					binaryExpression(
+							variable('b', 5),
+							variable('c', 10),
 							OPERATOR_AND
 					),
 					OPERATOR_OR
@@ -77,45 +90,45 @@ describe('Parser.generateExpression', function() {
 		{
 			description: 'with a not on the left',
 			input: '!a || b',
-			expected: nb.binaryExpression(
-					nb.notConditional(nb.variable('a')),
-					nb.variable('b'),
+			expected: binaryExpression(
+					notConditional(variable('a', 1)),
+					variable('b', 6),
 					OPERATOR_OR
 			)
 		},
 		{
 			description: 'with a not on the right',
 			input: 'a || !b',
-			expected: nb.binaryExpression(
-					nb.variable('a'),
-					nb.notConditional(nb.variable('b')),
+			expected: binaryExpression(
+					variable('a', 0),
+					notConditional(variable('b', 6)),
 					OPERATOR_OR
 			)
 		},
 		{
 			description: 'with a variable',
 			input: 'a',
-			expected: nb.variable('a')
+			expected: variable('a', 0)
 		},
 		{
 			description: 'with a integer value',
 			input: '123',
-			expected: nb.value(123)
+			expected: value(123, 0)
 		},
 		{
 			description: 'with a float value',
 			input: '123.34',
-			expected: nb.value(123.34)
+			expected: value(123.34, 0)
 		},
 		{
 			description: 'with a single quote string',
 			input: '\'foo\'',
-			expected: nb.value('foo')
+			expected: value('foo', 0)
 		},
 		{
 			description: 'with a double quote string',
 			input: '"foo"',
-			expected: nb.value('foo')
+			expected: value('foo', 0)
 		}
 	].forEach((testCase) => {
 		it(`should parse ${testCase.description}`, function() {

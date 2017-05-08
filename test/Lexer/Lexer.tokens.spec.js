@@ -1,8 +1,9 @@
 'use strict';
 
-const expect = require('chai').expect;
-const Lexer = require('../../src/Lexer');
-const {
+import {expect} from 'chai';
+import Lexer from '../../src/Lexer';
+import {TOKEN_STRUCTURE_EOF} from '../../src/constants';
+import {
 	textLiteral,
 	startTag,
 	endTag,
@@ -16,8 +17,8 @@ const {
 	andOperator,
 	notOperator,
 	integer,
-	float
-} = require('../tokenBuilders');
+	float,
+} from '../tokenBuilders';
 
 describe('Lexer.tokens', function() {
 	[
@@ -51,24 +52,24 @@ describe('Lexer.tokens', function() {
 			description: 'with if tag',
 			input: ['a', '{{if}}'],
 			expected: [
-				textLiteral(0, 'a\n'),
-				startTag(2), ifStatement(4), endTag(6)
+				textLiteral(0, 'a\n', 0, 0),
+				startTag(2, 0, 1), ifStatement(4, 2, 1), endTag(6, 4, 1)
 			]
 		},
 		{
 			description: 'with whitespace inside tag',
 			input: ['a', '{{ if }}'],
 			expected: [
-				textLiteral(0, 'a\n'),
-				startTag(2), ifStatement(5), endTag(8)
+				textLiteral(0, 'a\n', 0, 0),
+				startTag(2, 0 , 1), ifStatement(5, 3, 1), endTag(8, 6, 1)
 			]
 		},
 		{
 			description: 'with variable in if',
 			input: ['a', '{{if var}}'],
 			expected: [
-				textLiteral(0, 'a\n'),
-				startTag(2), ifStatement(4), variable(7, 'var'), endTag(10)
+				textLiteral(0, 'a\n', 0, 0),
+				startTag(2, 0, 1), ifStatement(4, 2, 1), variable(7, 'var', 5, 1), endTag(10, 8, 1)
 			]
 		},
 		{
@@ -152,16 +153,11 @@ describe('Lexer.tokens', function() {
 	].forEach((testCase) => {
 		it(`should tokenize ${testCase.description}`, function() {
 			const lexer = new Lexer(testCase.input.join('\n'));
-			const tokens = lexer.tokens();
-			const result = [];
+			const tokens = Array.from(lexer.tokens());
 
-			for (const value of tokens) {
-				if (value.subType !== 'EOF') {
-					result.push(value);
-				}
-			}
+			expect(tokens.pop().subType).to.equal(TOKEN_STRUCTURE_EOF);
 
-			expect(result).to.deep.equal(testCase.expected);
+			expect(tokens).to.deep.equal(testCase.expected);
 		});
 	});
 

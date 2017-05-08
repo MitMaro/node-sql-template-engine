@@ -1,8 +1,8 @@
 'use strict';
 
-const ParserError = require('./error/Parser');
+import ParserError from './error/Parser';
 
-const {
+import {
 	TOKEN_TYPE_VALUE,
 	TOKEN_TYPE_UNARY_OPERATOR,
 	TOKEN_TYPE_BINARY_OPERATOR,
@@ -48,7 +48,7 @@ const {
 	PARSER_TYPE_BRANCH,
 	PARSER_TYPE_UNARY_OPERATOR,
 	PARSER_TYPE_BINARY_OPERATOR
-} = require('./constants');
+} from './constants';
 
 const LEFT_ASSOCIATIVE = 'LEFT_ASSOCIATIVE';
 const RIGHT_ASSOCIATIVE = 'RIGHT_ASSOCIATIVE';
@@ -89,20 +89,26 @@ const PrecedenceTable = {
 	}
 };
 
-class Parser {
+export default class Parser {
 	constructor(lexer) {
 		this.lexer = lexer;
 		this.tokens = this.lexer.tokens();
 		this.nextTokens = [];
 	}
 
-	static checkTokenType(token, types = []) {
+	static checkTokenType(token, types) {
+		if (!Parser.isTokenOfType(token, types)) {
+			throw new ParserError('Unexpected token', token);
+		}
+		return token;
+	}
+
+	static isTokenOfType(token, types) {
 		for (const type of Array.isArray(types) ? types : [ types ]) {
 			if (token.type === type || token.subType === type) {
 				return token;
 			}
 		}
-		throw new ParserError(`Unexpected token: ${token.type}:${token.subType}`, token);
 	}
 
 	getExpectedToken(types) {
@@ -131,17 +137,15 @@ class Parser {
 		const token = this.tokens.next();
 
 		if (token.done) {
-			throw new ParserError('Unexpected end of tokens');
+			throw new ParserError('Unexpected end of tokens', token);
 		}
 		return token.value;
 	}
 
 	generateAST() {
-		this.sources = [];
 		const ast = this.generateRootNode();
 
 		this.getExpectedToken(TOKEN_STRUCTURE_EOF);
-		ast.sources = this.sources;
 		return ast;
 	}
 
@@ -187,7 +191,9 @@ class Parser {
 
 		return {
 			type: PARSER_TYPE_TEXT_LITERAL,
-			value: token.value
+			value: token.value,
+			column: token.column,
+			row: token.row
 		};
 	}
 
@@ -261,13 +267,17 @@ class Parser {
 		if (token.subType === TOKEN_VALUE_VARIABLE) {
 			value = {
 				type: PARSER_TYPE_VARIABLE,
-				name: token.value
+				name: token.value,
+				column: token.column,
+				row: token.row,
 			};
 		}
 		else { // if token is a string
 			value = {
 				type: PARSER_TYPE_VALUE,
-				value: this.getExpectedToken(TOKEN_VALUE_STRING).value
+				value: this.getExpectedToken(TOKEN_VALUE_STRING).value,
+				column: token.column,
+				row: token.row,
 			};
 			this.getExpectedToken([
 				TOKEN_BOUNDARY_STRING_DOUBLE,
@@ -275,12 +285,41 @@ class Parser {
 			]);
 		}
 
+		let dataPath;
+		if (Parser.isTokenOfType(this.lookahead(), [
+			TOKEN_VALUE_VARIABLE,
+			TOKEN_BOUNDARY_STRING_SINGLE,
+			TOKEN_BOUNDARY_STRING_DOUBLE
+		])) {
+			const nextToken = this.getNextToken();
+			if (nextToken.subType === TOKEN_VALUE_VARIABLE) {
+				dataPath = {
+					type: PARSER_TYPE_VARIABLE,
+					name: nextToken.value,
+					column: nextToken.column,
+					row: nextToken.row,
+				};
+			}
+			else { // if token is a string
+				dataPath = {
+					type: PARSER_TYPE_VALUE,
+					value: this.getExpectedToken(TOKEN_VALUE_STRING).value,
+					column: nextToken.column,
+					row: nextToken.row,
+				};
+				this.getExpectedToken([
+					TOKEN_BOUNDARY_STRING_DOUBLE,
+					TOKEN_BOUNDARY_STRING_SINGLE
+				]);
+			}
+		}
+
 		this.getExpectedToken(TOKEN_BOUNDARY_TAG_END);
 
-		this.sources.push(value);
 		return {
 			type: PARSER_TYPE_INCLUDE,
-			value
+			value,
+			dataPath
 		};
 	}
 
@@ -339,7 +378,7 @@ class Parser {
 		return {
 			type: PARSER_TYPE_UNARY_OPERATOR,
 			operator: token.subType,
-			expression: this.generateExpression(PrecedenceTable[token.subType].precedence)
+			expression: this.generateExpression(PrecedenceTable[token.subType].precedence),
 		};
 	}
 
@@ -360,7 +399,9 @@ class Parser {
 		if (token.subType === TOKEN_VALUE_VARIABLE) {
 			return {
 				type: PARSER_TYPE_VARIABLE,
-				name: token.value
+				name: token.value,
+				row: token.row,
+				column: token.column,
 			};
 		}
 
@@ -380,9 +421,9 @@ class Parser {
 
 		return {
 			type: PARSER_TYPE_VALUE,
-			value
+			value,
+			row: token.row,
+			column: token.column,
 		};
 	}
 }
-
-module.exports = Parser;

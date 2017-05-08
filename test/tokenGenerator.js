@@ -1,6 +1,7 @@
 'use strict';
 
-module.exports = (values) => {
+
+export default function(values) {
 	return {
 		*tokens() {
 			while (values.length) {

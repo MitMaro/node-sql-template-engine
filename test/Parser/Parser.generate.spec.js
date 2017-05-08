@@ -1,9 +1,21 @@
 'use strict';
 
-const expect = require('chai').expect;
-const Parser = require('../../src/Parser');
-const Lexer = require('../../src/Lexer');
-const nb = require('../nodeBuilder');
+import {expect} from 'chai';
+import Parser from '../../src/Parser';
+import Lexer from '../../src/Lexer';
+import {
+	literal,
+	include,
+	value,
+	variable,
+	branch,
+	variableConditional,
+	constantConditional,
+	conditional,
+	andConditional,
+	root,
+	notConditional
+} from '../nodeBuilder';
 
 function getParserResult(input) {
 	const inputString = Array.isArray(input) ? input.join('\n') : input;
@@ -24,7 +36,7 @@ describe('Parser.generate', function() {
 	it('should parse with single literal', function() {
 		const result = getParserResult('literal value');
 		const expected = [
-			nb.literal('literal value')
+			literal('literal value', 0, 0)
 		];
 
 		expect(result.statements).to.deep.equal(expected);
@@ -33,34 +45,44 @@ describe('Parser.generate', function() {
 	it('should parse with basic include statement and string value', function() {
 		const result = getParserResult('{{include "foo"}}');
 		const expected = [
-			nb.include(nb.value('foo'))
+			include(value('foo', 10, 0))
 		];
 
-		expect(result.sources).to.deep.equal([ nb.value('foo') ]);
 		expect(result.statements).to.deep.equal(expected);
 	});
 
 	it('should parse with basic include statement and variable value', function() {
 		const result = getParserResult('{{include foo}}');
 		const expected = [
-			nb.include(nb.variable('foo'))
+			include(variable('foo', 10, 0))
 		];
 
-		expect(result.sources).to.deep.equal([ nb.variable('foo') ]);
 		expect(result.statements).to.deep.equal(expected);
 	});
 
-	it('should set sources from inside if blocks', function() {
-		const result = getParserResult('{{if bar}}{{include baz}}{{fi}}');
+	it('should parse with basic include statement and string dataPath', function() {
+		const result = getParserResult('{{include "foo" "bar"}}');
+		const expected = [
+			include(value('foo', 10, 0), value('bar', 16, 0))
+		];
 
-		expect(result.sources).to.deep.equal([ nb.variable('baz') ]);
+		expect(result.statements).to.deep.equal(expected);
+	});
+
+	it('should parse with basic include statement and variable dataPath', function() {
+		const result = getParserResult('{{include "foo" bar}}');
+		const expected = [
+			include(value('foo', 10, 0), variable('bar', 16, 0))
+		];
+
+		expect(result.statements).to.deep.equal(expected);
 	});
 
 	it('should parse with basic if statement', function() {
 		const result = getParserResult('{{if foo}}bar{{fi}}');
 		const expected = [
-			nb.branch(
-				nb.variableConditional('foo', nb.root(nb.literal('bar')))
+			branch(
+				variableConditional('foo', 5, 0, root(literal('bar', 10, 0)))
 			)
 		];
 
@@ -76,9 +98,9 @@ describe('Parser.generate', function() {
 			'{{fi}}'
 		]);
 		const expected = [
-			nb.branch([
-				nb.variableConditional('foo', nb.root(nb.literal('\nbar\n'))),
-				nb.constantConditional(nb.root(nb.literal('\nbaz\n')))
+			branch([
+				variableConditional('foo', 5, 0, root(literal('bar\n', 0, 1))),
+				constantConditional(root(literal('baz\n', 0, 3)))
 			])
 		];
 
@@ -92,13 +114,13 @@ describe('Parser.generate', function() {
 			'{{fi}}'
 		]);
 		const expected = [
-			nb.branch([
-				nb.conditional(
-					nb.andConditional(
-						nb.variable('foo'),
-						nb.variable('bar')
+			branch([
+				conditional(
+					andConditional(
+						variable('foo', 5, 0),
+						variable('bar', 12, 0)
 					),
-					nb.root(nb.literal('\nbaz\n'))
+					root(literal('baz\n', 0, 1))
 				)
 			])
 		];
@@ -113,10 +135,10 @@ describe('Parser.generate', function() {
 			'{{fi}}'
 		]);
 		const expected = [
-			nb.branch([
-				nb.conditional(
-					nb.notConditional(nb.variable('foo')),
-					nb.root(nb.literal('\nbar\n'))
+			branch([
+				conditional(
+					notConditional(variable('foo', 6, 0)),
+					root(literal('bar\n', 0, 1))
 				)
 			])
 		];

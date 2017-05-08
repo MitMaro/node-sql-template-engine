@@ -1,7 +1,7 @@
 'use strict';
 
-const expect = require('chai').expect;
-const Lexer = require('../../src/Lexer');
+import {expect} from 'chai';
+import Lexer from '../../src/Lexer';
 
 describe('Lexer.skipWhitespace', function() {
 	it('should skip on empty string', function() {

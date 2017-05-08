@@ -1,8 +1,8 @@
 /* eslint max-depth: "off" */
 'use strict';
 
-const LexerError = require('./error/Lexer');
-const {
+import LexerError from './error/Lexer';
+import {
 	TOKEN_TYPE_VALUE,
 	TOKEN_TYPE_STRUCTURE,
 	TOKEN_TYPE_STATEMENT,
@@ -41,8 +41,8 @@ const {
 	OPERATOR_GREATER_THAN,
 	OPERATOR_LESS_THAN,
 	OPERATOR_GREATER_EQUAL_THAN,
-	OPERATOR_LESS_EQUAL_THAN
-} = require('./constants');
+	OPERATOR_LESS_EQUAL_THAN,
+} from './constants';
 
 const boundaryTypeLookup = {
 	'{{': TOKEN_BOUNDARY_TAG_START,
@@ -97,20 +97,39 @@ Array.prototype.concat(
 	delimiters[delimiter.length].push(delimiter);
 });
 
-class Lexer {
+export default class Lexer {
 	constructor(input) {
 		this.state = STATE_TEXT_LITERAL;
 		this.pointer = 0;
+		this.columnNumber = 0;
+		this.rowNumber = 0;
 		this.input = input;
 		// length used for cases of checking ahead by one character from pointer
 		this.lookAheadLength = this.input.length - 1;
 		this.stringDelimiter = null;
 	}
 
+	movePointer() {
+		if (this.input[this.pointer] === '\n') {
+			this.rowNumber++;
+			this.columnNumber = 0;
+		}
+		else {
+			this.columnNumber++;
+		}
+		this.pointer++;
+	}
+
 	// skip all whitespace or until EOF reached
 	skipWhitespace() {
 		while (this.pointer < this.input.length && this.input[this.pointer].trim().length === 0) {
-			this.pointer++;
+			this.movePointer();
+		}
+	}
+
+	skipNewline() {
+		if (this.input[this.pointer] === '\n') {
+			this.movePointer();
 		}
 	}
 
@@ -123,13 +142,13 @@ class Lexer {
 				&& this.input[this.pointer + 1] === '{'
 			)
 		) {
-			this.pointer++;
+			this.movePointer();
 		}
 
 		// because we look two characters ahead, we need to increment the
 		// pointer by one if end of input is reached
 		if (this.lookAheadLength >= 0 && this.pointer >= this.lookAheadLength) {
-			this.pointer++;
+			this.movePointer();
 		}
 	}
 
@@ -144,9 +163,9 @@ class Lexer {
 			if (this.input[this.pointer + 1] === this.stringDelimiter && this.input[this.pointer] !== '\\') {
 				break;
 			}
-			this.pointer++;
+			this.movePointer();
 		}
-		this.pointer++;
+		this.movePointer();
 	}
 
 	isAtDelimiter() {
@@ -176,26 +195,31 @@ class Lexer {
 		if (this.isAtDelimiter()) {
 			return;
 		}
-		this.pointer++;
+		this.movePointer();
 
 		while (this.pointer < this.input.length) {
 			if (this.isAtDelimiter()) {
 				return;
 			}
-			this.pointer++;
+			this.movePointer();
 		}
 	}
 
 	// scan pass the next delimiter
 	scanNextDelimiter() {
 		const delimiter = this.isAtDelimiter() || '';
-
-		this.pointer = this.pointer + delimiter.length;
+		for (let i = 0; i < delimiter.length; i++) {
+			this.movePointer();
+		}
 	}
 
 	*tokens() {
+		let column = -1;
+		let row = -1;
 		while (this.pointer < this.input.length) {
 			if (this.state === STATE_TEXT_LITERAL) {
+				column = this.columnNumber;
+				row = this.rowNumber;
 				const startIndex = this.pointer;
 
 				this.scanTextLiteral();
@@ -207,6 +231,8 @@ class Lexer {
 					continue;
 				}
 				yield {
+					column,
+					row,
 					type: TOKEN_TYPE_STRUCTURE,
 					subType: TOKEN_STRUCTURE_TEXT_LITERAL,
 					value,
@@ -219,6 +245,8 @@ class Lexer {
 
 				this.skipWhitespace();
 
+				column = this.columnNumber;
+				row = this.rowNumber;
 				let startIndex = this.pointer;
 
 				// scan until next delimiter
@@ -229,6 +257,8 @@ class Lexer {
 					type = statementTypeLookup[value];
 					if (type) {
 						yield {
+							column,
+							row,
 							type: TOKEN_TYPE_STATEMENT,
 							subType: type,
 							value,
@@ -253,6 +283,8 @@ class Lexer {
 					}
 
 					yield {
+						column,
+						row,
 						type: TOKEN_TYPE_VALUE,
 						subType: type,
 						value,
@@ -262,6 +294,8 @@ class Lexer {
 					continue;
 				}
 
+				column = this.columnNumber;
+				row = this.rowNumber;
 				startIndex = this.pointer;
 				this.scanNextDelimiter();
 				value = this.input.substring(startIndex, this.pointer);
@@ -273,9 +307,12 @@ class Lexer {
 						this.state = this.state === STATE_END_STRING ? STATE_TAG : STATE_STRING;
 					}
 					else if (type === TOKEN_BOUNDARY_TAG_END) {
+						this.skipNewline();
 						this.state = STATE_TEXT_LITERAL;
 					}
 					yield {
+						column,
+						row,
 						type: TOKEN_TYPE_BOUNDARY,
 						subType: type,
 						value,
@@ -287,6 +324,8 @@ class Lexer {
 				type = binaryOperatorTypeLookup[value];
 				if (type) {
 					yield {
+						column,
+						row,
 						type: TOKEN_TYPE_BINARY_OPERATOR,
 						subType: type,
 						value,
@@ -297,6 +336,8 @@ class Lexer {
 				}
 				type = unaryOperatorTypeLookup[value];
 				yield {
+					column,
+					row,
 					type: TOKEN_TYPE_UNARY_OPERATOR,
 					subType: type,
 					value,
@@ -305,11 +346,15 @@ class Lexer {
 				};
 			}
 			else if (this.state === STATE_STRING) {
+				column = this.columnNumber;
+				row = this.rowNumber;
 				const startIndex = this.pointer;
 
 				this.scanString();
 				this.state = STATE_END_STRING;
 				yield {
+					column,
+					row,
 					type: TOKEN_TYPE_VALUE,
 					subType: TOKEN_VALUE_STRING,
 					value: this.input.substring(startIndex, this.pointer),
@@ -323,6 +368,8 @@ class Lexer {
 		}
 
 		yield {
+			column: this.columnNumber,
+			row: this.rowNumber,
 			type: TOKEN_TYPE_STRUCTURE,
 			subType: TOKEN_STRUCTURE_EOF,
 			value: null,
@@ -331,5 +378,3 @@ class Lexer {
 		};
 	}
 }
-
-module.exports = Lexer;
