@@ -1,5 +1,8 @@
+--require ts-node/register
+--require test/mocha-bootstrap.ts
 --recursive
 --check-leaks
 --reporter spec
+--watch-extensions ts,js
 --colors
---compilers js:babel-core/register
+test/**/*.spec.ts

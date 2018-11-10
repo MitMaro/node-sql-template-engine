@@ -1,5 +1,7 @@
-lib
-node_modules
-.nyc_output
-coverage
-test/Runtime/fixtures/access-denied.tpl
+.nyc_output/
+node_modules/
+build/
+coverage/
+lib/
+types/
+test/fixtures/access-denied.tpl
