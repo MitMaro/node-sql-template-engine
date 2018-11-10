@@ -23,16 +23,16 @@ Creating a SQL Template Engine instance is very straight forward.
 
 #### JavaScript
 ```javascript
-const sqlTemplateEngine = require('@mitmaro/sql-template-engine');
-const serviceManager = sqlTemplateEngine({
+const createSqlTemplateEngine = require('@mitmaro/sql-template-engine');
+const sqlTemplateEngine = createSqlTemplateEngine({
     // options
 });
 ```
 
 #### TypeScript
 ```typescript
-import sqlTemplateEngine from '@mitmaro/sql-template-engine';
-const serviceManager = sqlTemplateEngine({
+import createSqlTemplateEngine from '@mitmaro/sql-template-engine';
+const sqlTemplateEngine = createSqlTemplateEngine({
     // options
 });
 ```
@@ -50,7 +50,7 @@ const serviceManager = sqlTemplateEngine({
 ### Invoking a template file
 
 ```javascript
-const result = await serviceManager.invokeTemplateFile('template.tpl', {foo: 'bar'});
+const result = await sqlTemplateEngine.invokeTemplateFile('template.tpl', {foo: 'bar'});
 ```
 
 ## Development
@@ -70,7 +70,7 @@ Development is done using Node 8 and NPM 5, and tested against both Node 8 and N
 This project is released under the ISC license. See [LICENSE](LICENSE.md).
 
 
-[documentation]: http://www.mitmaro.ca/node-service-manager/
+[documentation]: http://www.mitmaro.ca/node-sql-template-engine/
 [LICENSE]:LICENSE
 [node]:https://nodejs.org/en/download/
 [nvm]:https://github.com/creationix/nvm#installation
