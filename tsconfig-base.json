@@ -1,0 +1,30 @@
+{
+    "compilerOptions": {
+        /* Basic Options */
+        "target": "es2016",
+        "module": "commonjs",
+        "sourceMap": true,
+        "outDir": "./lib/",
+        "lib": [
+            "DOM",
+            "es2016",
+            "esnext",
+            "DOM.Iterable",
+            "es2016.Array.Include"
+        ],
+
+        /* Strict Type-Checking Options */
+        "strict": true,
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        "strictFunctionTypes": true,
+        "noImplicitThis": true,
+        "alwaysStrict": true,
+
+        /* Additional Checks */
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true
+    }
+}

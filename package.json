@@ -7,30 +7,49 @@
     "test": "test"
   },
   "scripts": {
-    "build": "babel src/ --out-dir lib/",
-    "lint": "eslint .",
-    "test": "eslint . && npm run test:coverage",
-    "test:unit": "BABEL_ENV=test test/test.sh",
-    "test:coverage": "BABEL_ENV=test nyc test/test.sh"
+    "build": "scripts/build.bash",
+    "build:docs": "scripts/docs.bash",
+    "lint": "scripts/lint.bash",
+    "test": "scripts/lint.bash && scripts/test.bash :all",
+    "test:unit": "scripts/test.bash :unit",
+    "test:coverage": "scripts/test.bash :coverage"
   },
   "author": "Tim Oram <mitmaro@gmail.com>",
   "license": "ISC",
   "devDependencies": {
-    "babel-cli": "^6.24.1",
-    "babel-plugin-istanbul": "^4.1.3",
-    "babel-plugin-transform-async-to-generator": "^6.24.1",
-    "babel-plugin-transform-es2015-modules-commonjs": "^6.24.1",
-    "chai": "^3.5.0",
-    "chalk": "^1.1.3",
-    "diff": "^2.2.3",
-    "eslint": "^3.0.0",
-    "eslint-config-mitmaro": "^2.0.0",
-    "eslint-plugin-strict-newline": "^1.0.0",
-    "mocha": "^3.0.0",
-    "nyc": "10.2.2"
+    "@mitmaro/build-scripts": "^0.1.5",
+    "@types/chai": "^4.1.7",
+    "@types/chai-as-promised": "^7.1.0",
+    "@types/lodash.get": "^4.4.4",
+    "@types/lodash.topath": "^4.5.4",
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^10.12.5",
+    "@types/sinon-chai": "^3.2.0",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "diff": "^3.5.0",
+    "eslint": "^5.9.0",
+    "eslint-config-mitmaro": "^4.0.0",
+    "eslint-plugin-chai-expect": "^2.0.1",
+    "eslint-plugin-filenames": "^1.3.2",
+    "eslint-plugin-mocha": "^5.2.0",
+    "eslint-plugin-promise": "^4.0.1",
+    "eslint-plugin-security": "^1.4.0",
+    "eslint-plugin-typescript": "^0.13.0",
+    "fs-extra": "^7.0.1",
+    "mocha": "^5.2.0",
+    "nyc": "13.1.0",
+    "sinon": "^7.1.1",
+    "sinon-chai": "^3.2.0",
+    "ts-node": "^7.0.1",
+    "tslint": "^5.11.0",
+    "typedoc": "^0.13.0",
+    "typescript": "^3.1.6",
+    "typescript-eslint-parser": "^20.1.1"
   },
   "dependencies": {
-    "es6-promisify": "^5.0.0",
-    "lodash.get": "^4.4.2"
+    "@mitmaro/errors": "^2.0.0",
+    "lodash.get": "^4.4.2",
+    "lodash.topath": "^4.5.2"
   }
 }

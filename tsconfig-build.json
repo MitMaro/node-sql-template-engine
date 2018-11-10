@@ -1,0 +1,13 @@
+{
+    "extends": "./tsconfig-base.json",
+    "compilerOptions": {
+        "sourceMap": false,
+        "outDir": "./lib/",
+        "declaration": true,
+        "declarationDir": "./types/",
+        "listEmittedFiles": true
+    },
+    "files": [
+        "src/index.ts"
+    ]
+}

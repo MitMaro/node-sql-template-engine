@@ -1,3 +1,0 @@
-{{ if foo && foo }}
-    AAA
-{{ fi }}
