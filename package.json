@@ -1,10 +1,25 @@
 {
-  "name": "sql-templates",
-  "version": "0.0.1",
+  "name": "@mitmaro/sql-template-engine",
+  "version": "0.1.0",
   "description": "A SQL template engine",
-  "main": "src/index.js",
+  "main": "lib/index.js",
+  "files": [
+    "lib",
+    "types"
+  ],
   "directories": {
     "test": "test"
+  },
+  "types": "types/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:MitMaro/node-sql-template-engine.git"
+  },
+  "engines": {
+    "node": ">= 8"
   },
   "scripts": {
     "build": "scripts/build.bash",
@@ -14,7 +29,7 @@
     "test:unit": "scripts/test.bash :unit",
     "test:coverage": "scripts/test.bash :coverage"
   },
-  "author": "Tim Oram <mitmaro@gmail.com>",
+  "author": "Tim Oram <dev@mitmaro.ca>",
   "license": "ISC",
   "devDependencies": {
     "@mitmaro/build-scripts": "^0.1.5",
