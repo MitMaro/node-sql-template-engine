@@ -30,6 +30,9 @@
     "test:coverage": "scripts/test.bash :coverage"
   },
   "author": "Tim Oram <dev@mitmaro.ca>",
+  "contributors": [
+    "Tim Oram <dev@mitmaro.ca>"
+  ],
   "license": "ISC",
   "devDependencies": {
     "@mitmaro/build-scripts": "^0.1.5",
